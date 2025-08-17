@@ -2,9 +2,10 @@
 import pandas as pd
 import os
 from pathlib import Path
+from datetime import datetime
 
-#%%
-# Paths
+
+#%% Paths
 BASE_DIR = Path.cwd()
 CSV_DIR = BASE_DIR / "csv"
 
@@ -22,21 +23,25 @@ print(f'Latest CSV is {latest_csv}')
 
 # create df
 df = pd.read_csv(CSV_DIR/latest_csv)
-print(df.head(10))
+print(df.head())
+print(df.tail())
 
-# %%
-# CLEANING
+# %% CLEANING
 
 # # all the column names are fine
 # add index-1 (since 0-base index already exists)
 # df = df.reset_index() # turns index into a normal column
 
-# set up DESCRIPTION2 Series
+# Set up DESCRIPTION2 column
 desc_2 = ['N/A']
 desc_2[1:] = df['DESCRIPTION'][0:-1]
 df = df.assign(DESCRIPTION2=desc_2)
 print(df.head())
+print(df.tail())
 
+
+
+# Set up Category column
 # Make new custom column called category based on Description and DESCRITPION2
 def get_category(desc1, desc2):
     if "Coverage Period" in desc1 and "Jobs for" in desc2 :
@@ -49,10 +54,31 @@ def get_category(desc1, desc2):
         return "stripe"
     # in the future, add an elif for the following logic
     # not ([desc] = "" or [desc] = "stripe") then [desc] else "!Uncategorized")
-
-# %%
 category_s = pd.Series([get_category(desc1, desc2) for desc1, desc2 in zip(df["DESCRIPTION"], df["DESCRIPTION2"])])
 df["CATEGORY"] = category_s
+print(df.head())
+print(df.tail())
+
+
+# Set up primary key column
+def get_primary_key(filename:str, category:str):
+    return (str(filename)+str(category)).lower()
+primary_s = pd.Series([get_primary_key(file, cat) for file, cat in zip(df['Source.Name'], df['CATEGORY'])])
+df['PRIMARY'] = primary_s
+print(df.head())
+print(df.tail())
+
+# Clean and export
+df = df[df['UNIT PRICE'].notna() & df['CATEGORY'].notnull()]
+df = df.drop(['DESCRIPTION', 'DESCRIPTION2'], axis=1)
+df = df[['PRIMARY', 'Source.Name', 'CATEGORY', 'QTY', 'UNIT PRICE', 'PRICE (AUD)']]
+print(df.head())
+print(df.tail())
+
+outname = datetime.now().strftime(r'%Y%M%d%H%M%S') + '_transformed.csv'
+df.to_csv(BASE_DIR / 'out' / outname, index=False)
+
+
 # In column DESCRIPTION, apply Str.replace("Coverage Period", "Coverage Period +") so you can split by plus sign
 # Split DESCRIPTION by plus "+" sign and name the new column "Coverage from".
 # Split "Coverage from" by " to " and name the new column "Coverage to"
@@ -72,3 +98,4 @@ df["CATEGORY"] = category_s
 
 # %%
 print(df.head())
+print(df.tail())
