@@ -1,0 +1,5 @@
+{"level": "DEBUG", "message": "debug message", "timestamp": "2025-08-21T11:32:13.615125+00:00", "logger": "__main__", "module": "<ipython-input-1-4b7605be1869>", "function": "<module>", "line": 31, "thread_name": "MainThread", "x": "hello"}
+{"level": "INFO", "message": "info message", "timestamp": "2025-08-21T11:32:13.615346+00:00", "logger": "__main__", "module": "<ipython-input-1-4b7605be1869>", "function": "<module>", "line": 32, "thread_name": "MainThread"}
+{"level": "WARNING", "message": "warning message", "timestamp": "2025-08-21T11:32:13.615504+00:00", "logger": "__main__", "module": "<ipython-input-1-4b7605be1869>", "function": "<module>", "line": 33, "thread_name": "MainThread"}
+{"level": "ERROR", "message": "error message", "timestamp": "2025-08-21T11:32:13.616714+00:00", "logger": "__main__", "module": "<ipython-input-1-4b7605be1869>", "function": "<module>", "line": 34, "thread_name": "MainThread"}
+{"level": "CRITICAL", "message": "critical message", "timestamp": "2025-08-21T11:32:13.617693+00:00", "logger": "__main__", "module": "<ipython-input-1-4b7605be1869>", "function": "<module>", "line": 35, "thread_name": "MainThread"}
