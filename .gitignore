@@ -2,3 +2,5 @@ sample-invoices/
 venv/
 run-venv.ps1
 logger_main.py
+invoice-project-467712-privatekey.json
+__pycache__/
