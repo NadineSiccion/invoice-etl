@@ -1,6 +1,8 @@
 # Invoice-ETL-Project
 This project is a mock solution based on a real world business problem encountered in my early career. Though not implemented, this repository covers its practical and hypothetical execution. 
 
+![ETL Process Diagram](https://raw.githubusercontent.com/NadineSiccion/invoice-etl/refs/heads/main/imgs/process%20diagram%20invoice%20etl-2.png?token=GHSAT0AAAAAADKVD3JNBXA7FYNRZB2TSNUO2F5PBSA "ETL Process Diagram")
+
 # Problem
 Company XYZ was prospecting new call/SMS platforms to replace their current one. Thus, a financial analysis regarding the costs of the Company's SMS automated messaging over the last 7 years must be done.
 
@@ -12,9 +14,9 @@ The objectives of this project are:
 - Load the data to a data warehouse to be accessed by analysts.
 
 # Solution (and How I Got There)
-My solution is protrayed in this diagram. Explanations for each part are found below.
+My solution is illustrated in this diagram. Explanations for each part are found below.
 
-![ETL Process Diagram]("/imgs/process diagram invoice etl-2.png" "ETL Process Diagram")
+![ETL Process Diagram](https://raw.githubusercontent.com/NadineSiccion/invoice-etl/refs/heads/main/imgs/process%20diagram%20invoice%20etl-2.png?token=GHSAT0AAAAAADKVD3JNBXA7FYNRZB2TSNUO2F5PBSA "ETL Process Diagram")
 
 ## Extraction
 Monthly reports of the invoices of the past 7 years could only be downloaded as PDFs from the website.
@@ -35,7 +37,7 @@ With the invoice data collated and extracted into csv format, pandas is used to 
 
 Next, the data is be transformed into this structure to follow the principles of the Star Schema for scalable analysis:
 
-![Database Diagram]("/imgs/db diagram invoice etc.png" "Database Diagram")
+![Database Diagram](https://raw.githubusercontent.com/NadineSiccion/invoice-etl/refs/heads/main/imgs/db%20diagram%20invoice%20etc.png?token=GHSAT0AAAAAADKVD3JNKAXGPWAKTTDFI5DW2F5O7XQ)
 
 After transformation, the data will be loaded to the "data warehouse".
 
@@ -43,12 +45,12 @@ After transformation, the data will be loaded to the "data warehouse".
 The transformed data is loaded onto Google BigQuery via authentication from Google Cloud API and the pandas-gbq library. With access, this data may be quiried from Google BigQuery for analysis. 
 
 # How to Use
-## Requirements
+### Requirements
 The following are required to run this project:
 * Computer running Windows 10/11 OS
 * Microsoft Office Excel installed to the laptop.
 
-## Steps
+### Steps
 * Clone this repository on your system.
 * Enable the use of Macros in the `SM8 Invoice Analysis.xlsm` file.
 * Export - Run the `download_recent_csv.bat`.
