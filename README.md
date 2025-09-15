@@ -1,9 +1,10 @@
 # Invoice-ETL-Project
 This project is a mock solution based on a real world business problem encountered in my early career. Though not implemented, this repository covers its practical and hypothetical execution. 
 
-![ETL Process Diagram](https://raw.githubusercontent.com/NadineSiccion/invoice-etl/refs/heads/main/imgs/process%20diagram%20invoice%20etl-2.png?token=GHSAT0AAAAAADKVD3JNBXA7FYNRZB2TSNUO2F5PBSA "ETL Process Diagram")
+<img width="1175" height="327" alt="process diagram invoice etl-2" src="https://github.com/user-attachments/assets/9ae1f451-d800-49f7-90b0-e51ba9cc5553" />
 
-# Problem
+
+# Business Problem
 Company XYZ was prospecting new call/SMS platforms to replace their current one. Thus, a financial analysis regarding the costs of the Company's SMS automated messaging over the last 7 years must be done.
 
 This information is available in their past invoices in Software A, as well as other information that could be useful for future analysis. **However**, all invoices are stored in **PDF format** with no easy way to extract the data for analysis.
@@ -13,12 +14,12 @@ The objectives of this project are:
 - Transform the data so it is safe for analysis.
 - Load the data to a data warehouse to be accessed by analysts.
 
-# Solution (and How I Got There)
+# Solution
 My solution is illustrated in this diagram. Explanations for each part are found below.
 
-![ETL Process Diagram](https://raw.githubusercontent.com/NadineSiccion/invoice-etl/refs/heads/main/imgs/process%20diagram%20invoice%20etl-2.png?token=GHSAT0AAAAAADKVD3JNBXA7FYNRZB2TSNUO2F5PBSA "ETL Process Diagram")
+<img width="1175" height="327" alt="process diagram invoice etl-2" src="https://github.com/user-attachments/assets/9ae1f451-d800-49f7-90b0-e51ba9cc5553" />
 
-## Extraction
+### Extraction
 Monthly reports of the invoices of the past 7 years could only be downloaded as PDFs from the website.
 
 - All the PDFs are to be saved into a single folder with a consistent naming pattern (we will use the existing naming convention which is `dd-MMM-YYYY.pdf`, ex. `02-Aug-2024.pdf`).
@@ -32,16 +33,16 @@ Monthly reports of the invoices of the past 7 years could only be downloaded as 
 * I have tried many other PDF extraction options and Power Query has come up with the best results. So I have automated this solution using batch and VBA scripts which is run by running the `download_recent_csv.bat` file.
 * The extracted data is very messy and cannot be used for data analysis as is. [image]  -->
 
-## Transformation
+### Transformation
 With the invoice data collated and extracted into csv format, pandas is used to clean the values. A backup of this simple dataframe is saved locally as a CSV. 
 
 Next, the data is be transformed into this structure to follow the principles of the Star Schema for scalable analysis:
 
-![Database Diagram](https://raw.githubusercontent.com/NadineSiccion/invoice-etl/refs/heads/main/imgs/db%20diagram%20invoice%20etc.png?token=GHSAT0AAAAAADKVD3JNKAXGPWAKTTDFI5DW2F5O7XQ)
+<img width="771" height="503" alt="db diagram invoice etc" src="https://github.com/user-attachments/assets/7b00be05-c101-41f5-84a0-81e787adfefa" />
 
 After transformation, the data will be loaded to the "data warehouse".
 
-## Load
+### Load
 The transformed data is loaded onto Google BigQuery via authentication from Google Cloud API and the pandas-gbq library. With access, this data may be quiried from Google BigQuery for analysis. 
 
 # How to Use
