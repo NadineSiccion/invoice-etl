@@ -9,8 +9,23 @@ import atexit
 import json
 import logging.config
 import pathlib
-
 logger = logging.getLogger(__name__)  # __name__ is a common choice
+
+month_substrings = {
+    'jan': '01',
+    'feb': '02',
+    'mar': '03',
+    'apr': '04',
+    'may': '05',
+    'jun': '06',
+    'jul': '07',
+    'aug': '08',
+    'sep': '09',
+    'oct': '10',
+    'nov': '11',
+    'dec': '12'
+}
+
 def setup_logging():
     config_file = pathlib.Path("2-stderr-json-file.json")
     with open(config_file) as f_in:
@@ -21,17 +36,21 @@ def setup_logging():
     if queue_handler is not None:
         queue_handler.listener.start()
         atexit.register(queue_handler.listener.stop)
-
 setup_logging()
+
+# Initialize logging
 logging.basicConfig(level="INFO")
 
-# logger.debug("debug message", extra={"x": "hello"})
-# logger.info("info message")
-# logger.warning("warning message")
-# logger.error("error message")
-# logger.critical("critical message")
+''' 
+logger.debug("debug message", extra={"x": "hello"})
+logger.info("info message")
+logger.warning("warning message")
+logger.error("error message")
+logger.critical("critical message")
+'''
 
-#%% Paths
+#%%
+# Initilize Paths
 BASE_DIR = Path.cwd()
 CSV_DIR = BASE_DIR / "csv"
 
@@ -49,9 +68,11 @@ logger.info('Latest CSV is {latest_csv}')
 df = pd.read_csv(CSV_DIR/latest_csv)
 print(df.head())
 print(df.tail())
+logger.info("Initial DataFrame created.")
 
-# %% CLEANING
+# %% 
 
+# CLEANING
 # Set up DESCRIPTION2 column
 desc_2 = ['N/A']
 desc_2[1:] = df['DESCRIPTION'][0:-1]
@@ -59,14 +80,14 @@ df = df.assign(DESCRIPTION2=desc_2)
 print(df.head())
 print(df.tail())
 
-# Set up Category column based on DESCRIPTION column
+# Set up Category column
 def get_category(desc1, desc2):
     if "Coverage Period" in desc1 and "Jobs for" in desc2 :
-        return "Jobs" 
+        return "jobs" 
     elif "SMS Messages Sent" in desc1 and "Initial 20 jobs are" in desc2 :
-        return "SMS" 
+        return "sms" 
     elif "Coverage Period" in desc1 and "SMS Messages Sent" in desc2 :
-        return "Addon Forms" 
+        return "addon_forms" 
     elif "This amount will be debited from your Stripe" in desc1 and "ServiceM8 Stripe Application Fee" in desc2 :
         return "stripe"
     # in the future, add an elif for the following logic
@@ -76,19 +97,45 @@ df["CATEGORY"] = category_s
 print(df.head())
 print(df.tail())
 
-# Set up primary key column
-def get_primary_key(filename:str, category:str):
-    return (str(filename)+str(category)).lower()
+def get_new_filename(source_name, month_map):
+    str_arr = source_name[:-4].split("-")
+    str_arr[1] = month_map[str_arr[1][0:2]]
+    new_name = str_arr[2]+str_arr[1]+str_arr[0]
+    return new_name
+
+
+# Make the File Dimension
+def get_coverage_period(description):
+    pass
+
+
+# Make the transaction keys
+
+
+# Make the category
+
+# Set up Primary key column / Transaction ID
+def get_primary_key(source_name:str, category:str):
+    name = str(source_name).lower().replace('.pdf', '').replace('-','')
+    
+    for substr, num in month_substrings.items():
+        if substr in name:
+            name = name.replace(substr, num, 1)  # Replace only the first occurrence
+            break  # Remove this `break` if you want to replace all matching substrings
+    
+    return (name + str(category)).lower()
+
 primary_s = pd.Series([get_primary_key(file, cat) for file, cat in zip(df['Source.Name'], df['CATEGORY'])])
 df['PRIMARY'] = primary_s
 print(df.head())
 print(df.tail())
+logger.info("Primary keys made")
 
 # Clean data and export csv to "out" folder
 df = df[df['UNIT PRICE'].notna() & df['CATEGORY'].notnull()]
 df = df.drop(['DESCRIPTION', 'DESCRIPTION2'], axis=1)
 df = df[['PRIMARY', 'Source.Name', 'CATEGORY', 'QTY', 'UNIT PRICE', 'PRICE (AUD)']]
-df.rename(columns={'Source.Name': 'NAME', 'PRICE (AUD)': 'PRICE AUD'}, inplace=True)
+df.rename(columns={'PRIMARY':'transaction_key', 'Source.Name': 'file_name', 'CATEGORY': 'category_name', 'QTY':'quantity', 'UNIT PRICE':'unit_price', 'PRICE (AUD)': 'total_price_aud'}, inplace=True)
 logger.info('DataFrame has successfully been transformed and cleaned.')
 
 print(df.head())
@@ -105,3 +152,4 @@ logger.info(f'DataFrame has been output as CSV file in {BASE_DIR / 'out' / outna
 # %%
 print(df.head())
 print(df.tail())
+
