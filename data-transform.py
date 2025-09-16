@@ -53,6 +53,7 @@ logger.critical("critical message")
 # Initilize Paths
 BASE_DIR = Path.cwd()
 CSV_DIR = BASE_DIR / "csv"
+CATEGORY_PATH = BASE_DIR / "categories.json"
 
 # Create DataFrame out of the latest CSV
 csv_files = os.listdir(CSV_DIR)
@@ -80,6 +81,8 @@ df = df.assign(DESCRIPTION2=desc_2)
 print(df.head())
 print(df.tail())
 
+# TODO: Parse start and end dates, put it in as a column.
+
 # Set up Category column
 def get_category(desc1, desc2):
     if "Coverage Period" in desc1 and "Jobs for" in desc2 :
@@ -90,6 +93,8 @@ def get_category(desc1, desc2):
         return "addon_forms" 
     elif "This amount will be debited from your Stripe" in desc1 and "ServiceM8 Stripe Application Fee" in desc2 :
         return "stripe"
+    else:
+        return "uncategorized"
     # in the future, add an elif for the following logic
     # not ([desc] = "" or [desc] = "stripe") then [desc] else "!Uncategorized")
 category_s = pd.Series([get_category(desc1, desc2) for desc1, desc2 in zip(df["DESCRIPTION"], df["DESCRIPTION2"])])
@@ -114,15 +119,17 @@ def get_coverage_period(description):
 
 # Make the category
 
-# Set up Primary key column / Transaction ID
-def get_primary_key(source_name:str, category:str):
-    name = str(source_name).lower().replace('.pdf', '').replace('-','')
-    
+# %% Set up Primary key column / Transaction ID
+def change_month_to_number(name):
     for substr, num in month_substrings.items():
         if substr in name:
             name = name.replace(substr, num, 1)  # Replace only the first occurrence
-            break  # Remove this `break` if you want to replace all matching substrings
-    
+    return name
+
+#%%
+def get_primary_key(source_name:str, category:str):
+    name = str(source_name).lower().replace('.pdf', '').replace('-','')
+    name = change_month_to_number(name)
     return (name + str(category)).lower()
 
 primary_s = pd.Series([get_primary_key(file, cat) for file, cat in zip(df['Source.Name'], df['CATEGORY'])])
@@ -153,3 +160,23 @@ logger.info(f'DataFrame has been output as CSV file in {BASE_DIR / 'out' / outna
 print(df.head())
 print(df.tail())
 
+# %%
+
+def make_dim_category(path) -> pd.DataFrame:
+    with open(path, 'r') as file:
+        data = json.load(file)
+    
+    int_list = [int(num) for num in list(data.keys())]
+    
+    output = pd.DataFrame({'category_key': int_list,
+     'category_name': list(data.values())})
+    return output
+
+dim_category = make_dim_category(CATEGORY_PATH)
+dim_category.head()
+print(dim_category)
+logging.info("dim_category df made")
+    
+# %%
+file_key_s = pd.Series([change_month_to_number(item.lower()) for item in df['file_name']])
+# TODO: def make_dim_file
