@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 
-# Code for Logging
+# Code for Logging 
 import atexit
 import json
 import logging.config
@@ -274,9 +274,37 @@ logger.info('DataFrame has successfully been transformed and cleaned.')
 print("👇👇 After cleaning:")
 df.head()
 
-# Export csv to "out" folder
-outname = datetime.now().strftime(r'%Y%M%d%H%M%S') + '_transformed.csv'
-df.to_csv(BASE_DIR / 'out' / outname, index=False)
+out_timestamp = datetime.now().strftime(r'%Y%M%d%H%M%S')
+# %%
+# Checking directories
+result_dir = BASE_DIR / 'out' / out_timestamp
+if not result_dir.parents[0].exists():
+    print(f'👀 Directory: "{result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" does not exist.')
+    logging.info(f'👀 Directory: "{result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" does not exist.')
+    
+    result_dir.parents[0].mkdir()
+    
+    print(f'✅ Directory: {result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" created made.')
+    logging.info(f'✅ Directory: {result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" created made.')
+else:
+    print(f'✅ Directory: "{result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" exists!')
+    logging.info(f'✅ Directory: "{result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" exists!')
+
+if not result_dir.exists():
+    print(f'👀 Directory: "{result_dir.relative_to(BASE_DIR).as_posix()}" does not exist.')
+    logging.info(f'👀 Directory: "{result_dir.relative_to(BASE_DIR).as_posix()}" does not exist.')
+    result_dir.mkdir()
+    print(f'✅ Directory: "{result_dir.relative_to(BASE_DIR).as_posix()}" made.')
+    logging.info(f'✅ Directory: "{result_dir.relative_to(BASE_DIR).as_posix()}" made.')
+else:
+    print(f'✅ Directory: "{result_dir.relative_to(BASE_DIR).as_posix()}" already exists!')
+    logging.info(f'✅ Directory: "{result_dir.relative_to(BASE_DIR).as_posix()}" already exists!')
+
+# %%
+
+# Export csv to a folder in "out" folder
+outname = out_timestamp + '_transformed.csv'
+df.to_csv(result_dir / outname, index=False)
 print(f'☑ DataFrame has been output as CSV file in {BASE_DIR / 'out' / outname}.')
 logger.info(f'☑ DataFrame has been output as CSV file in {BASE_DIR / 'out' / outname}.')
 
@@ -306,3 +334,21 @@ fact_transactions.tail()
 dim_category.tail()
 # %%
 dim_file.tail()
+
+# %%
+# Save dfs to a directory
+outname = out_timestamp + 'fact_transactions.csv'
+fact_transactions.to_csv(result_dir / outname, index=False)
+print(f'☑ fact_transactions has been output as CSV file in {result_dir}.')
+logger.info(f'☑ fact_transactions has been output as CSV file in {result_dir}.')
+
+outname = out_timestamp + 'dim_category.csv'
+dim_category.to_csv(result_dir / outname, index=False)
+print(f'☑ dim_category has been output as CSV file in {result_dir}.')
+logger.info(f'☑ dim_category has been output as CSV file in {result_dir}.')
+
+outname = out_timestamp + 'dim_file.csv'
+dim_file.to_csv(result_dir / outname, index=False)
+print(f'☑ dim_file has been output as CSV file in {result_dir}.')
+logger.info(f'☑ dim_file has been output as CSV file in {result_dir}.')
+# %%
