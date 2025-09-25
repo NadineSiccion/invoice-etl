@@ -274,7 +274,7 @@ logger.info('DataFrame has successfully been transformed and cleaned.')
 print("👇👇 After cleaning:")
 df.head()
 
-out_timestamp = datetime.now().strftime(r'%Y%M%d%H%M%S')
+out_timestamp = datetime.now().strftime(r'%Y%m%d%H%M%S')
 # %%
 # Checking directories
 result_dir = BASE_DIR / 'out' / out_timestamp
@@ -337,17 +337,17 @@ dim_file.tail()
 
 # %%
 # Save dfs to a directory
-outname = out_timestamp + 'fact_transactions.csv'
+outname = out_timestamp + '_fact_transactions.csv'
 fact_transactions.to_csv(result_dir / outname, index=False)
 print(f'☑ fact_transactions has been output as CSV file in {result_dir}.')
 logger.info(f'☑ fact_transactions has been output as CSV file in {result_dir}.')
 
-outname = out_timestamp + 'dim_category.csv'
+outname = out_timestamp + '_dim_category.csv'
 dim_category.to_csv(result_dir / outname, index=False)
 print(f'☑ dim_category has been output as CSV file in {result_dir}.')
 logger.info(f'☑ dim_category has been output as CSV file in {result_dir}.')
 
-outname = out_timestamp + 'dim_file.csv'
+outname = out_timestamp + '_dim_file.csv'
 dim_file.to_csv(result_dir / outname, index=False)
 print(f'☑ dim_file has been output as CSV file in {result_dir}.')
 logger.info(f'☑ dim_file has been output as CSV file in {result_dir}.')

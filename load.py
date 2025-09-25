@@ -1,20 +1,17 @@
 # %%
-import pandas as pd
+# import pandas as pd
 import os
 from pathlib import Path
-# from google.cloud import bigquery
+from google.cloud import bigquery
 # from pandas_gbq import to_gbq
 from google.oauth2 import service_account
-import pandas_gbq
-
+# import pandas_gbq
 
 # Code for logging
 import atexit
 import json
 import logging.config
 import pathlib
-
-logger = logging.getLogger(__name__)  # __name__ is a common choice
 def setup_logging():
     config_file = pathlib.Path("2-stderr-json-file.json")
     with open(config_file) as f_in:
@@ -25,42 +22,80 @@ def setup_logging():
         queue_handler.listener.start()
         atexit.register(queue_handler.listener.stop)
 
+
+# Setup logging
+logger = logging.getLogger(__name__)  # __name__ is a common choice
 setup_logging()
-logging.basicConfig(level="INFO")
+logging.basicConfig(level="Running load.py...")
 
-
-# Load most recent out as a DataFrame
+# Paths and resources
 BASE_DIR = Path.cwd()
 OUT_DIR = BASE_DIR / "out"
 
+# Set ADC path dynamically in Python
+key_path = BASE_DIR / 'gcp_credentials.json'
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path.as_posix()
+
+# Get latest timestamp
 csv_files = os.listdir(OUT_DIR)
-if ".gitignore" in csv_files:
+if ".gitignore"  in csv_files:
     csv_files.remove(".gitignore")
 csv_files.sort()
 for file in csv_files:
     print(file)
-latest_csv = csv_files[-1]
-logger.info(f'Latest CSV is {latest_csv}')
-
-df = pd.read_csv(OUT_DIR/latest_csv)
-print(df.head())
-print(df.tail())
+source_timestamp = csv_files[-1]
+logger.info(f'👀 Latest CSV is {source_timestamp}')
+print(f'👀 Latest CSV is {source_timestamp}')
 
 
-# Set up BigQuery
-# bigquery_client = bigquery.Client()
+# Set up Google BigQuery API Connection
 credentials = service_account.Credentials.from_service_account_file(
-    BASE_DIR/'invoice-project-467712-privatekey.json')
-logger.info("Credentials set based on Private Key JSON.")
+    BASE_DIR/'gcp_credentials.json')
+client = bigquery.Client()
 
 project_id = "invoice-project-467712"
 dataset_id = "invoice_dataset"
-destination_table = "invoice_table"
+table_id = "dim_file"
+# table_id = dataset_id+"."+destination_table
+logger.info("Credentials set based on Private Key JSON.")
+print("✅ Credentials set based on Private Key JSON.")
 
-table_id = dataset_id+"."+destination_table
 
-pandas_gbq.to_gbq(df, table_id, project_id=project_id, if_exists='replace', credentials=credentials)
-logger.info(f"Table has been successfully loaded into {project_id+"."+dataset_id+"."+table_id}.")
-print(f"Table has been successfully loaded into {project_id+"."+dataset_id+"."+table_id}.")
+# Set up client and table (start with dim_file)
+table_ref = client.dataset(dataset_id).table(table_id)
 
-# df = pandas_gbq.read_gbq(sql, project_id="YOUR-PROJECT-ID", credentials=credentials)
+# Define Job Config 
+job_config = bigquery.LoadJobConfig(
+    source_format=bigquery.SourceFormat.CSV,
+    skip_leading_rows=1,  # Skip header row
+    autodetect=True,
+    schema = [
+        bigquery.SchemaField("file_key", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("file_name", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("start_date", "DATE", mode="NULLABLE"),
+        bigquery.SchemaField("end_date", "DATE", mode="NULLABLE"),
+        bigquery.SchemaField("issue_date", "DATE")
+    ],
+    write_disposition=bigquery.WriteDisposition.WRITE_EMPTY,
+)
+
+# https://cloud.google.com/python/docs/reference/bigquery/latest/google.cloud.bigquery.client.Client#google_cloud_bigquery_client_Client_load_table_from_dataframe
+
+# Identify target path of fact_transactions
+source_name = source_timestamp + '_dim_file.csv'
+RESULT_DIR = OUT_DIR / source_timestamp
+source_path = RESULT_DIR / source_name
+
+# Load from local csv
+with open(source_path, "rb") as source_file:
+    load_job = client.load_table_from_file(
+        source_file,
+        table_ref,
+        job_config=job_config
+    )
+
+load_job.result()  # Wait for the job to complete
+
+logger.info(f"✅ Table has been successfully loaded.")
+print(f"✅ Table has been successfully loaded.")
+
