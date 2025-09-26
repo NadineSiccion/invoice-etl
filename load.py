@@ -47,55 +47,78 @@ source_timestamp = csv_files[-1]
 logger.info(f'👀 Latest CSV is {source_timestamp}')
 print(f'👀 Latest CSV is {source_timestamp}')
 
-
 # Set up Google BigQuery API Connection
 credentials = service_account.Credentials.from_service_account_file(
     BASE_DIR/'gcp_credentials.json')
 client = bigquery.Client()
 
-project_id = "invoice-project-467712"
-dataset_id = "invoice_dataset"
-table_id = "dim_file"
-# table_id = dataset_id+"."+destination_table
-logger.info("Credentials set based on Private Key JSON.")
-print("✅ Credentials set based on Private Key JSON.")
+def load_to_gbq(target:str, table_schema) -> None:
+    project_id = "invoice-project-467712"
+    dataset_id = "invoice_dataset"
+    table_id = target
+    # table_id = dataset_id+"."+destination_table
+    logger.info("Credentials set based on Private Key JSON.")
+    print("✅ Credentials set based on Private Key JSON.")
 
 
-# Set up client and table (start with dim_file)
-table_ref = client.dataset(dataset_id).table(table_id)
+    # Set up client and table (start with dim_file)
+    table_ref = client.dataset(dataset_id).table(table_id)
 
-# Define Job Config 
-job_config = bigquery.LoadJobConfig(
-    source_format=bigquery.SourceFormat.CSV,
-    skip_leading_rows=1,  # Skip header row
-    autodetect=True,
-    schema = [
-        bigquery.SchemaField("file_key", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("file_name", "STRING", mode="REQUIRED"),
-        bigquery.SchemaField("start_date", "DATE", mode="NULLABLE"),
-        bigquery.SchemaField("end_date", "DATE", mode="NULLABLE"),
-        bigquery.SchemaField("issue_date", "DATE")
-    ],
-    write_disposition=bigquery.WriteDisposition.WRITE_EMPTY,
-)
-
-# https://cloud.google.com/python/docs/reference/bigquery/latest/google.cloud.bigquery.client.Client#google_cloud_bigquery_client_Client_load_table_from_dataframe
-
-# Identify target path of fact_transactions
-source_name = source_timestamp + '_dim_file.csv'
-RESULT_DIR = OUT_DIR / source_timestamp
-source_path = RESULT_DIR / source_name
-
-# Load from local csv
-with open(source_path, "rb") as source_file:
-    load_job = client.load_table_from_file(
-        source_file,
-        table_ref,
-        job_config=job_config
+    # Define Job Config 
+    job_config = bigquery.LoadJobConfig(
+        source_format=bigquery.SourceFormat.CSV,
+        skip_leading_rows=1,  # Skip header row
+        autodetect=True,
+        schema = table_schema,
+        write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
     )
 
-load_job.result()  # Wait for the job to complete
+    # https://cloud.google.com/python/docs/reference/bigquery/latest/google.cloud.bigquery.client.Client#google_cloud_bigquery_client_Client_load_table_from_dataframe
 
-logger.info(f"✅ Table has been successfully loaded.")
-print(f"✅ Table has been successfully loaded.")
+    # Identify target path of fact_transactions
+    source_name = source_timestamp + '_' + target + '.csv'
+    RESULT_DIR = OUT_DIR / source_timestamp
+    source_path = RESULT_DIR / source_name
 
+    # Load from local csv
+    with open(source_path, "rb") as source_file:
+        load_job = client.load_table_from_file(
+            source_file,
+            table_ref,
+            job_config=job_config
+        )
+
+    load_job.result()  # Wait for the job to complete
+
+    logger.info(f"✅ Table {target} has been successfully loaded.")
+    print(f"✅ Table {target} has been successfully loaded.")
+
+
+# load dim_file
+schema = [
+    bigquery.SchemaField("file_key", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("file_name", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("start_date", "DATE", mode="NULLABLE"),
+    bigquery.SchemaField("end_date", "DATE", mode="NULLABLE"),
+    bigquery.SchemaField("issue_date", "DATE")
+]
+load_to_gbq("dim_file", schema)
+
+# TODO: load fact_transactions
+schema = [
+    bigquery.SchemaField("transaction_key", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("file_key", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("category_key", "INTEGER", mode="REQUIRED"),
+    bigquery.SchemaField("quantity", "INTEGER", mode="REQUIRED"),
+    bigquery.SchemaField("unit_price", "FLOAT", mode="REQUIRED"),
+    bigquery.SchemaField("total_price_aud", "FLOAT", mode="REQUIRED")
+]
+load_to_gbq("fact_transactions", schema)
+
+
+# load dim_category
+schema = [
+    bigquery.SchemaField("category_key", "INTEGER", mode="REQUIRED"),
+    bigquery.SchemaField("category_name", "STRING", mode="REQUIRED")
+]
+load_to_gbq("dim_category", schema)

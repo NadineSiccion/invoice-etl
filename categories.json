@@ -1,5 +1,1 @@
-{"-1":"uncategorized",
-"1":"jobs",
-"2":"addon_forms",
-"3":"stripe",
-"4":"sms"}
+{ "uncategorized": -1, "jobs": 1, "addon_forms": 2, "stripe": 3, "sms": 4 }

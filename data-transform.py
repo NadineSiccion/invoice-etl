@@ -106,15 +106,17 @@ def get_transaction_key_key(source_name:str, category:str):
 # Set up Category column
 def get_category(desc1:str, desc2:str) -> str:
     if "Coverage Period" in desc1 and "Jobs for" in desc2 :
-        return "jobs" 
+        out = "jobs" 
     elif "SMS Messages Sent" in desc1 and "Initial 20 jobs are" in desc2 :
-        return "sms" 
+        out = "sms" 
     elif "Coverage Period" in desc1 and "SMS Messages Sent" in desc2 :
-        return "addon_forms" 
+        out = "addon_forms" 
     elif "This amount will be debited from your Stripe" in desc1 and "ServiceM8 Stripe Application Fee" in desc2 :
-        return "stripe"
+        out = "stripe"
     else:
-        return "uncategorized"
+        out = "uncategorized"
+    # print(out)
+    return out
     # in the future, add an elif for the following logic
     # not ([desc] = "" or [desc] = "stripe") then [desc] else "!Uncategorized")
 
@@ -175,23 +177,27 @@ def get_category_dict(path) -> dict:
         category_dict = json.load(file)
     return category_dict
 
-def get_category_key_list(category_dict:dict, category_col) -> list:
+def get_category_key_list(category_dict:dict, category_col) -> list[int]:
     key_list = []
     category_names = list(category_dict.keys())
+    print('category names:',category_names)
 
     for item in category_col:
+        print("row's category: " + item)
         if item.lower().strip() in category_names:
             for name in category_names:
-                key_list.append(category_dict[name])
+                if item == name:
+                    key_list.append(category_dict[name])
+                    break
         else:
             key_list.append("-1")
     return key_list
 
 def make_dim_category(category_dict) -> pd.DataFrame:
-    int_list = [int(num) for num in list(category_dict.keys())]
+    int_list = [int(num) for num in list(category_dict.values())]
     
     output = pd.DataFrame({'category_key': int_list,
-     'category_name': list(category_dict.values())})
+     'category_name': list(category_dict.keys())})
     return output
 
 # %%
@@ -204,14 +210,14 @@ BASE_DIR = Path.cwd()
 CSV_DIR = BASE_DIR / "csv"
 CATEGORY_PATH = BASE_DIR / "categories.json"
 
-# EXPORT
+# EXPORT RAW
 # Get CSV
 latest_csv = get_latest_csv_path(CSV_DIR)
 logger.info(f'👀 Latest CSV is {latest_csv}')
 print(f'👀 Latest CSV is {latest_csv}')
 
 # Create initial DataFrame
-df = pd.read_csv(CSV_DIR/latest_csv)
+df = pd.read_csv(CSV_DIR/latest_csv, dtype={'QTY': 'Int32'})
 logger.info("☑ Initial DataFrame created.")
 print("☑ Initial DataFrame created.")
 
@@ -235,6 +241,7 @@ df['file_key'] = pd.Series(file_keys_list)
 logger.info("☑ Set up file_key column.")
 print("☑ Set up file_key column.")
 
+# %%
 # Add category_key column
 category_dict = get_category_dict(CATEGORY_PATH)
 category_key_list = get_category_key_list(category_dict, df['category_name'])
@@ -351,4 +358,8 @@ outname = out_timestamp + '_dim_file.csv'
 dim_file.to_csv(result_dir / outname, index=False)
 print(f'☑ dim_file has been output as CSV file in {result_dir}.')
 logger.info(f'☑ dim_file has been output as CSV file in {result_dir}.')
+
 # %%
+
+# get_category_dict()
+# get_category_key_list()
