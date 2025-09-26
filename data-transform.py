@@ -107,9 +107,9 @@ def get_transaction_key_key(source_name:str, category:str):
 def get_category(desc1:str, desc2:str) -> str:
     if "Coverage Period" in desc1 and "Jobs for" in desc2 :
         out = "jobs" 
-    elif "SMS Messages Sent" in desc1 and "Initial 20 jobs are" in desc2 :
+    elif "SMS Messages Sent" in desc1:
         out = "sms" 
-    elif "Coverage Period" in desc1 and "SMS Messages Sent" in desc2 :
+    elif "Addon - Forms" in desc1:
         out = "addon_forms" 
     elif "This amount will be debited from your Stripe" in desc1 and "ServiceM8 Stripe Application Fee" in desc2 :
         out = "stripe"
