@@ -1,57 +1,103 @@
-# Invoice-ETL-Project
-This project is a mock solution based on a real world business problem encountered in my early career. Though not implemented, this repository covers its practical and hypothetical execution. 
+# 🚀 ETL Pipeline Project
 
-<img width="1175" height="327" alt="process diagram invoice etl-2" src="https://github.com/user-attachments/assets/9ae1f451-d800-49f7-90b0-e51ba9cc5553" />
+This project demonstrates an **ETL (Extract–Transform–Load)** pipeline using **Python, Batch Scripts, and VBA**.
+It was inspired by a **real business problem encountered during work**. While this exact solution was not implemented in production, it represents a working alternative that could have automated reporting workflows, improved data consistency, and saved significant time.
 
 
-# Business Problem
+
+## 📖 Background
+
 Company XYZ was prospecting new call/SMS platforms to replace their current one. Thus, a financial analysis regarding the costs of the Company's SMS automated messaging over the last 7 years must be done.
 
 This information is available in their past invoices in Software A, as well as other information that could be useful for future analysis. **However**, all invoices are stored in **PDF format** with no easy way to extract the data for analysis.
 
-The objectives of this project are:
-- Extract the data from the PDFs.
-- Transform the data so it is safe for analysis.
-- Load the data to a data warehouse to be accessed by analysts.
+The goal of this project is to show how such a scenario could be solved by:
 
-# Solution
-My solution is illustrated in this diagram. Explanations for each part are found below.
+* **Extracting** data from heterogeneous sources (Excel, CSV, system dumps).
+* **Transforming** it into a standardized format (cleaning, reshaping, normalizing).
+* **Loading** the data into a structured schema, resembling a lightweight **data warehouse**, for downstream analysis and visualization.
+
+
+
+## 🖼️ ETL Architecture
+
 
 <img width="1175" height="327" alt="process diagram invoice etl-2" src="https://github.com/user-attachments/assets/9ae1f451-d800-49f7-90b0-e51ba9cc5553" />
 
-### Extraction
-Monthly reports of the invoices of the past 7 years could only be downloaded as PDFs from the website.
 
-- All the PDFs are to be saved into a single folder with a consistent naming pattern (we will use the existing naming convention which is `dd-MMM-YYYY.pdf`, ex. `02-Aug-2024.pdf`).
-- Using Excel's VBA, PowerQuery extracts the values into a csv file. 
-    - I found that PowerQuery is able to accurately extract the values with less setup costs than other software explored, with the caveat of the rows being misaligned in a preditable manner. 
-- This csv will be transformed and cleaned in the next phase.
-<!-- 
-## Extraction
-* PDFs are downloaded from the Past Invoice section of Company A's account. These PDFs are uploaded to a common SharePoint Folder. The format of these Invoices have been consistent for several years.
-* The common SharePoint folder is set as the Data Source for Power Query. Power Query is able to automatically parse data from the second table of each PDF and append them onto one Query.
-* I have tried many other PDF extraction options and Power Query has come up with the best results. So I have automated this solution using batch and VBA scripts which is run by running the `download_recent_csv.bat` file.
-* The extracted data is very messy and cannot be used for data analysis as is. [image]  -->
 
-### Transformation
-With the invoice data collated and extracted into csv format, pandas is used to clean the values. A backup of this simple dataframe is saved locally as a CSV. 
+## 🗄️ Data Warehouse Schema
 
-Next, the data is be transformed into this structure to follow the principles of the Star Schema for scalable analysis:
 
 <img width="771" height="503" alt="db diagram invoice etc" src="https://github.com/user-attachments/assets/7b00be05-c101-41f5-84a0-81e787adfefa" />
 
-After transformation, the data will be loaded to the "data warehouse".
 
-### Load
-The transformed data is loaded onto Google BigQuery via authentication from Google Cloud API and the pandas-gbq library. With access, this data may be quiried from Google BigQuery for analysis. 
 
-# How to Use
+## 📂 Project Structure
+
+```
+etl-project/
+├── README.md               # Project documentation
+├── requirements.txt        # Python dependencies
+├── data/
+│   ├── input/              # Raw sample datasets
+│   └── output/             # Processed results
+├── scripts/
+│   ├── extract.py          # Extract data (CSV, Excel, APIs, etc.)
+│   ├── transform.py        # Clean & transform logic
+│   ├── load.py             # Load into final schema
+├── batch/
+│   └── run_etl.bat         # Windows batch script to run the pipeline
+└── vba/
+    └── cleanup_module.bas  # VBA macro for final Excel formatting
+```
+
+---
+
+## ⚙️ How It Works
+
+1. **Extract**
+
+   * Python scripts pull data from raw files and system exports.
+   * Extracted files are stored in `/data/input/`.
+
+2. **Transform**
+
+   * Python validates and cleans data.
+   * Example: date normalization, removing duplicates, mapping inconsistent department codes.
+
+3. **Load**
+
+   * Python writes the final dataset into `/data/output/`.
+   * Data is structured according to the **warehouse schema** (fact + dimension tables).
+
+4. **Excel/VBA Automation**
+
+   * A VBA macro (`cleanup_module.bas`) can be imported into Excel to apply final formatting for business users.
+
+5. **Orchestration**
+
+   * `run_etl.bat` triggers the ETL pipeline end-to-end.
+
+
+
+## 📦 Installation & Setup
+
 ### Requirements
-The following are required to run this project:
-* Computer running Windows 10/11 OS
-* Microsoft Office Excel installed to the laptop.
+* Windows 10/11
+* Python 3
+* git bash
 
-### Steps
-* Clone this repository on your system.
-* Enable the use of Macros in the `SM8 Invoice Analysis.xlsm` file.
-* Export - Run the `download_recent_csv.bat`.
+### 1. Clone Repository
+
+```bash
+git clone git@github.com:NadineSiccion/invoice-etl.git
+cd etl-project
+```
+
+### 3. Run Pipeline
+
+```bash
+batch\run_etl.bat
+```
+
