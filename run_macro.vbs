@@ -3,7 +3,7 @@ xl.Visible = False
 
 Set oFSO = CreateObject("Scripting.FileSystemObject")
 strScriptDirectory = oFSO.GetParentFolderName(WScript.ScriptFullName)
-Set wb = xl.Workbooks.Open(strScriptDirectory & "\SM8 Invoices Analysis.xlsm")
+Set wb = xl.Workbooks.Open(strScriptDirectory & "\Export.xlsm")
 
 xl.Run "Module1.ExportCSV" ' Must match the macro name
 wb.Close SaveChanges=True
