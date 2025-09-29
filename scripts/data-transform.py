@@ -9,11 +9,12 @@ import re
 import atexit
 import json
 import logging.config
-import pathlib
+from configs import mylogger
+
 logger = logging.getLogger(__name__)  # __name__ is a common choice
 
-def setup_logging():
-    config_file = pathlib.Path("2-stderr-json-file.json")
+def setup_logging(config_file):
+    config_file = config_file
     with open(config_file) as f_in:
         config = json.load(f_in)
 
@@ -22,6 +23,17 @@ def setup_logging():
     if queue_handler is not None:
         queue_handler.listener.start()
         atexit.register(queue_handler.listener.stop)
+
+# def setup_logging(config_path:Path):
+#     config_file = config_path
+#     with open(config_file) as f_in:
+#         config = json.load(f_in)
+
+#     logging.config.dictConfig(config)
+#     queue_handler = logging.getHandlerByName("queue_handler")
+#     if queue_handler is not None:
+#         queue_handler.listener.start()
+#         atexit.register(queue_handler.listener.stop)
 
 ''' 
 logger.debug("debug message", extra={"x": "hello"})
@@ -46,14 +58,27 @@ month_substrings = {
 }
 
 # Create DataFrame out of the latest CSV
-def get_latest_csv_path(csv_dir) -> str:
-    csv_files = os.listdir(csv_dir)
-    if ".gitignore" in csv_files:
-        csv_files.remove(".gitignore")
-    csv_files.sort()
-    for file in csv_files:
-        print(file)
-    return csv_files[-1]
+def get_latest_csv_path(csv_dir:Path) -> str:
+    print("The following are the csv detected:")
+    file_list = []
+    for item in csv_dir.iterdir():
+        if item.is_file() and not (item.name == ".gitignore"):
+            file_list.append(item.name)
+            print(item.name)
+    file_list.sort()
+    recent_csv = file_list[-1]
+
+    print(f"👀 Most recent csv is {recent_csv}.")
+    return recent_csv
+
+    # FIXME: Delete if function works
+    # csv_files = os.listdir(csv_dir)
+    # if ".gitignore" in csv_files:
+    #     csv_files.remove(".gitignore")
+    # csv_files.sort()
+    # for file in csv_files:
+    #     print(file)
+    # return csv_files[-1]
 
 # Helper Functions
 def change_month_to_number(name) -> str:
@@ -169,9 +194,6 @@ def make_dim_file(
 
     return temp2_df
 
-
-    
-
 def get_category_dict(path) -> dict:
     with open(path, 'r') as file:
         category_dict = json.load(file)
@@ -183,7 +205,7 @@ def get_category_key_list(category_dict:dict, category_col) -> list[int]:
     print('category names:',category_names)
 
     for item in category_col:
-        print("row's category: " + item)
+        # print("row's category: " + item)
         if item.lower().strip() in category_names:
             for name in category_names:
                 if item == name:
@@ -201,14 +223,16 @@ def make_dim_category(category_dict) -> pd.DataFrame:
     return output
 
 # %%
-# Initialize logging
-setup_logging()
-logging.basicConfig(level="INFO")
-
 # Initilize Paths
-BASE_DIR = Path.cwd()
-CSV_DIR = BASE_DIR / "csv"
-CATEGORY_PATH = BASE_DIR / "categories.json"
+BASE_DIR = Path(__file__).resolve().parent.parent
+CSV_DIR = BASE_DIR / "input"
+OUTPUT_DIR = BASE_DIR / "output"
+CATEGORY_PATH = BASE_DIR / "scripts" / "configs" / "categories.json"
+LOG_CONFIG_PATH = BASE_DIR / "scripts" / "configs" / "log_config.json"
+
+# Initialize logging
+setup_logging(LOG_CONFIG_PATH)
+logging.basicConfig(level="INFO")
 
 # EXPORT RAW
 # Get CSV
@@ -267,8 +291,8 @@ print("☑ Set up transaction_key column.")
 
 # %%
 print("👇👇 Before cleaning:")
-df.head()
-df.tail()
+print(df.head())
+print(df.tail())
 
 # %%
 # Clean data for exporting as csv
@@ -279,12 +303,12 @@ df = df[['transaction_key', 'file_key', 'file_name', 'start_date', 'end_date', '
 
 logger.info('DataFrame has successfully been transformed and cleaned.')
 print("👇👇 After cleaning:")
-df.head()
+print(df.head())
 
 out_timestamp = datetime.now().strftime(r'%Y%m%d%H%M%S')
 # %%
 # Checking directories
-result_dir = BASE_DIR / 'out' / out_timestamp
+result_dir = OUTPUT_DIR / out_timestamp
 if not result_dir.parents[0].exists():
     print(f'👀 Directory: "{result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" does not exist.')
     logging.info(f'👀 Directory: "{result_dir.parents[0].relative_to(BASE_DIR).as_posix()}" does not exist.')
@@ -309,11 +333,11 @@ else:
 
 # %%
 
-# Export csv to a folder in "out" folder
+# Export csv to a folder in "output" folder
 outname = out_timestamp + '_transformed.csv'
 df.to_csv(result_dir / outname, index=False)
-print(f'☑ DataFrame has been output as CSV file in {BASE_DIR / 'out' / outname}.')
-logger.info(f'☑ DataFrame has been output as CSV file in {BASE_DIR / 'out' / outname}.')
+print(f'☑ DataFrame has been output as CSV file in {OUTPUT_DIR / outname}.')
+logger.info(f'☑ DataFrame has been output as CSV file in {OUTPUT_DIR / outname}.')
 
 # Set up fact_transactions
 fact_transactions = df[['transaction_key', 'file_key', 'category_key', 'quantity', 'unit_price', 'total_price_aud']]
@@ -323,24 +347,24 @@ print("☑ fact_transactions df made")
 # %%
 # Set up dim_file df
 dim_file = make_dim_file(df, 'file_key', 'file_name', 'start_date', 'end_date', 'issue_date')
-dim_file.head()
+print(dim_file.head())
 logging.info("☑ dim_file df made")
 print("☑ dim_file df made")
 
 # %%
 # Set up dim_category df
 dim_category = make_dim_category(get_category_dict(CATEGORY_PATH))
-dim_category.head()
+print(dim_category.head())
 logging.info("☑ dim_category df made")
 print("☑ dim_category df made")
 
 
 # %%
-fact_transactions.tail()
+print(fact_transactions.tail())
 # %%
-dim_category.tail()
+print(dim_category.tail())
 # %%
-dim_file.tail()
+print(dim_file.tail())
 
 # %%
 # Save dfs to a directory
@@ -358,8 +382,3 @@ outname = out_timestamp + '_dim_file.csv'
 dim_file.to_csv(result_dir / outname, index=False)
 print(f'☑ dim_file has been output as CSV file in {result_dir}.')
 logger.info(f'☑ dim_file has been output as CSV file in {result_dir}.')
-
-# %%
-
-# get_category_dict()
-# get_category_key_list()

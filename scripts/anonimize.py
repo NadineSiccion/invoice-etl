@@ -22,7 +22,7 @@ def redact_data_and_save(input_path:Path) -> None:
 
 
 # Main logic
-BASE_DIR = Path.cwd()
+BASE_DIR = Path(__file__).resolve().parent.parent
 # ORIG_PDFS_PATH = BASE_DIR / "sample-invoices"
 
 # orig_pdfs = os.listdir(".\\sample-invoices")

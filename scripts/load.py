@@ -3,19 +3,19 @@
 import os
 from pathlib import Path
 from google.cloud import bigquery
-# from pandas_gbq import to_gbq
 from google.oauth2 import service_account
-# import pandas_gbq
 
 # Code for logging
 import atexit
 import json
 import logging.config
-import pathlib
-def setup_logging():
-    config_file = pathlib.Path("2-stderr-json-file.json")
+from configs import mylogger
+
+def setup_logging(config_file):
+    config_file = config_file
     with open(config_file) as f_in:
         config = json.load(f_in)
+
     logging.config.dictConfig(config)
     queue_handler = logging.getHandlerByName("queue_handler")
     if queue_handler is not None:
@@ -23,43 +23,51 @@ def setup_logging():
         atexit.register(queue_handler.listener.stop)
 
 
+# Paths and resources
+BASE_DIR = Path(__file__).resolve().parent.parent
+OUT_DIR = BASE_DIR / "output"
+CONFIG_DIR = BASE_DIR / "scripts" / "configs"
+LOG_CONFIG_FILE = CONFIG_DIR / "log_config.json"
+KEY_PATH = CONFIG_DIR / "gcp_credentials.json"
+
 # Setup logging
 logger = logging.getLogger(__name__)  # __name__ is a common choice
-setup_logging()
+setup_logging(LOG_CONFIG_FILE)
 logging.basicConfig(level="Running load.py...")
 
-# Paths and resources
-BASE_DIR = Path.cwd()
-OUT_DIR = BASE_DIR / "out"
-
 # Set ADC path dynamically in Python
-key_path = BASE_DIR / 'gcp_credentials.json'
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_path.as_posix()
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = KEY_PATH.as_posix()
 
 # Get latest timestamp
-csv_files = os.listdir(OUT_DIR)
-if ".gitignore"  in csv_files:
-    csv_files.remove(".gitignore")
-csv_files.sort()
-for file in csv_files:
-    print(file)
-source_timestamp = csv_files[-1]
+dirs = OUT_DIR.iterdir()
+dir_names = []
+print(f"The directories found:")
+for dir in dirs:
+    if (dir.is_dir()) and not (dir.name == ".gitignore"):
+        print(f'{dir.name}')
+        dir_names.append(dir.name)
+dir_names.sort()
+source_timestamp = dir_names[-1]
 logger.info(f'👀 Latest CSV is {source_timestamp}')
 print(f'👀 Latest CSV is {source_timestamp}')
 
+
+
+# if ".gitignore"  in csv_files:
+#     csv_files.remove(".gitignore")
+# csv_files.sort()
+# for file in csv_files:
+#     print(file)
+
 # Set up Google BigQuery API Connection
-credentials = service_account.Credentials.from_service_account_file(
-    BASE_DIR/'gcp_credentials.json')
+credentials = service_account.Credentials.from_service_account_file(KEY_PATH)
 client = bigquery.Client()
 
 def load_to_gbq(target:str, table_schema) -> None:
-    project_id = "invoice-project-467712"
     dataset_id = "invoice_dataset"
     table_id = target
-    # table_id = dataset_id+"."+destination_table
     logger.info("Credentials set based on Private Key JSON.")
     print("✅ Credentials set based on Private Key JSON.")
-
 
     # Set up client and table (start with dim_file)
     table_ref = client.dataset(dataset_id).table(table_id)
@@ -104,7 +112,7 @@ schema = [
 ]
 load_to_gbq("dim_file", schema)
 
-# TODO: load fact_transactions
+# load fact_transactions
 schema = [
     bigquery.SchemaField("transaction_key", "STRING", mode="REQUIRED"),
     bigquery.SchemaField("file_key", "STRING", mode="REQUIRED"),
