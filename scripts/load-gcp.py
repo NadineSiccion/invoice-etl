@@ -4,24 +4,8 @@ import os
 from pathlib import Path
 from google.cloud import bigquery
 from google.oauth2 import service_account
-
-# Code for logging
-import atexit
-import json
 import logging.config
-from configs import mylogger
-
-def setup_logging(config_file):
-    config_file = config_file
-    with open(config_file) as f_in:
-        config = json.load(f_in)
-
-    logging.config.dictConfig(config)
-    queue_handler = logging.getHandlerByName("queue_handler")
-    if queue_handler is not None:
-        queue_handler.listener.start()
-        atexit.register(queue_handler.listener.stop)
-
+from configs import setuplogging
 
 # Paths and resources
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +16,7 @@ KEY_PATH = CONFIG_DIR / "gcp_credentials.json"
 
 # Setup logging
 logger = logging.getLogger(__name__)  # __name__ is a common choice
-setup_logging(LOG_CONFIG_FILE)
+setuplogging.setup_logging(LOG_CONFIG_FILE)
 logging.basicConfig(level="Running load.py...")
 
 # Set ADC path dynamically in Python
@@ -51,13 +35,6 @@ source_timestamp = dir_names[-1]
 logger.info(f'👀 Latest CSV is {source_timestamp}')
 print(f'👀 Latest CSV is {source_timestamp}')
 
-
-
-# if ".gitignore"  in csv_files:
-#     csv_files.remove(".gitignore")
-# csv_files.sort()
-# for file in csv_files:
-#     print(file)
 
 # Set up Google BigQuery API Connection
 credentials = service_account.Credentials.from_service_account_file(KEY_PATH)

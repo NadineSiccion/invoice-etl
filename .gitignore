@@ -6,3 +6,8 @@ gcp_credentials.json
 __pycache__/
 out/
 SM8 Invoices Analysis_orig.xlsm
+.venv/
+old-requirements.txt
+etl-flowchart.jpg
+desc1desc2.csv
+run-etl.bat
