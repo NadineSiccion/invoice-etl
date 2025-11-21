@@ -1,9 +1,4 @@
-import subprocess
-import pandas
-import sqlalchemy
-import sqlite3
-import logging.config
-import sys
+import subprocess, pandas, sqlalchemy, sqlite3, logging.config, sys
 from pathlib import Path
 from configs import setuplogging
 
